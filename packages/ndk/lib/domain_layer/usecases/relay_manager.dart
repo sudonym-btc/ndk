@@ -8,7 +8,6 @@ import '../../config/relay_defaults.dart';
 import '../../config/request_defaults.dart';
 import '../../shared/decode_nostr_msg/decode_nostr_msg.dart';
 import '../../shared/helpers/relay_helper.dart';
-import '../../shared/isolates/isolate_manager.dart';
 import '../../shared/logger/logger.dart';
 import '../../shared/nips/nip01/client_msg.dart';
 import '../entities/account.dart';
