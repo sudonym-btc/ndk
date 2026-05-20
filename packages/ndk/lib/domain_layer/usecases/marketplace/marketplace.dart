@@ -6,6 +6,7 @@ import 'escrow_usecase.dart';
 import 'hd_usecase.dart';
 import 'listing_usecase.dart';
 import 'offers_usecase.dart';
+import 'order_transition_usecase.dart';
 import 'order_usecase.dart';
 
 class Marketplace {
@@ -15,9 +16,7 @@ class Marketplace {
   final MarketplaceEscrowUsecase escrow;
   final MarketplaceHdUsecase hd;
   final MarketplaceOffersUsecase offers;
-
-  @Deprecated('Use orders')
-  MarketplaceOrderUsecase get order => orders;
+  final MarketplaceOrderTransitionsUsecase orderTransitions;
 
   Marketplace({
     required Requests requests,
@@ -25,22 +24,28 @@ class Marketplace {
     required Accounts accounts,
     required GiftWrap giftWrap,
     MarketplaceAccountIndexStore? accountIndexStore,
-  }) : listing = MarketplaceListingUsecase(
-         requests: requests,
-         broadcast: broadcast,
-         accounts: accounts,
-       ),
-       orders = MarketplaceOrderUsecase(
-         broadcast: broadcast,
-         accounts: accounts,
-         giftWrap: giftWrap,
-       ),
-       escrowMethod = MarketplaceEscrowMethodUsecase(requests: requests),
-       escrow = MarketplaceEscrowUsecase(requests: requests),
-       hd = MarketplaceHdUsecase(accounts: accounts, store: accountIndexStore),
-       offers = MarketplaceOffersUsecase(
-         requests: requests,
-         giftWrap: giftWrap,
-         accounts: accounts,
-       );
+  })  : listing = MarketplaceListingUsecase(
+          requests: requests,
+          broadcast: broadcast,
+          accounts: accounts,
+        ),
+        orders = MarketplaceOrderUsecase(
+          requests: requests,
+          broadcast: broadcast,
+          accounts: accounts,
+          giftWrap: giftWrap,
+        ),
+        escrowMethod = MarketplaceEscrowMethodUsecase(requests: requests),
+        escrow = MarketplaceEscrowUsecase(requests: requests),
+        hd = MarketplaceHdUsecase(accounts: accounts, store: accountIndexStore),
+        offers = MarketplaceOffersUsecase(
+          requests: requests,
+          giftWrap: giftWrap,
+          accounts: accounts,
+        ),
+        orderTransitions = MarketplaceOrderTransitionsUsecase(
+          requests: requests,
+          broadcast: broadcast,
+          accounts: accounts,
+        );
 }

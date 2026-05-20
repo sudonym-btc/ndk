@@ -42,6 +42,8 @@ export 'domain_layer/entities/marketplace/listing.dart';
 export 'domain_layer/entities/marketplace/marketplace_amount.dart';
 export 'domain_layer/entities/marketplace/marketplace_constants.dart';
 export 'domain_layer/entities/marketplace/order.dart';
+export 'domain_layer/entities/marketplace/order_group.dart';
+export 'domain_layer/entities/marketplace/order_transition.dart';
 
 /// Cashu entities
 export 'domain_layer/entities/cashu/cashu_keyset.dart';

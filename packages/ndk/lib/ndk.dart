@@ -37,6 +37,8 @@ export 'domain_layer/entities/marketplace/listing.dart';
 export 'domain_layer/entities/marketplace/marketplace_amount.dart';
 export 'domain_layer/entities/marketplace/marketplace_constants.dart';
 export 'domain_layer/entities/marketplace/order.dart';
+export 'domain_layer/entities/marketplace/order_group.dart';
+export 'domain_layer/entities/marketplace/order_transition.dart';
 
 export 'domain_layer/usecases/nwc/responses/get_balance_response.dart';
 export 'domain_layer/usecases/nwc/responses/get_budget_response.dart';
@@ -125,6 +127,7 @@ export 'domain_layer/usecases/marketplace/listing_usecase.dart';
 export 'domain_layer/usecases/marketplace/marketplace.dart';
 export 'domain_layer/usecases/marketplace/marketplace_response.dart';
 export 'domain_layer/usecases/marketplace/offers_usecase.dart';
+export 'domain_layer/usecases/marketplace/order_transition_usecase.dart';
 export 'domain_layer/usecases/marketplace/order_usecase.dart';
 
 /**

@@ -1,15 +1,19 @@
 import '../../../data_layer/models/nip_01_event_model.dart';
 import '../../../shared/nips/nip01/helpers.dart';
 import '../../entities/broadcast_response.dart';
+import '../../entities/filter.dart';
 import '../../entities/marketplace/listing.dart';
 import '../../entities/marketplace/marketplace_amount.dart';
 import '../../entities/marketplace/marketplace_constants.dart';
 import '../../entities/marketplace/order.dart';
+import '../../entities/marketplace/order_group.dart';
 import '../../entities/nip_01_event.dart';
 import '../../repositories/event_signer.dart';
 import '../accounts/accounts.dart';
 import '../broadcast/broadcast.dart';
 import '../gift_wrap/gift_wrap.dart';
+import '../requests/requests.dart';
+import 'marketplace_response.dart';
 
 class MarketplaceOrderPublishResult {
   final MarketplaceOrder order;
@@ -26,17 +30,20 @@ class MarketplaceOrderPublishResult {
 }
 
 class MarketplaceOrderUsecase {
+  final Requests _requests;
   final Broadcast _broadcast;
   final Accounts _accounts;
   final GiftWrap _giftWrap;
 
   MarketplaceOrderUsecase({
+    required Requests requests,
     required Broadcast broadcast,
     required Accounts accounts,
     required GiftWrap giftWrap,
-  }) : _broadcast = broadcast,
-       _accounts = accounts,
-       _giftWrap = giftWrap;
+  })  : _requests = requests,
+        _broadcast = broadcast,
+        _accounts = accounts,
+        _giftWrap = giftWrap;
 
   MarketplaceAmount quote(BaseListing listing, OrderProperties properties) {
     return quoteOrder(listing, properties);
@@ -47,8 +54,7 @@ class MarketplaceOrderUsecase {
     OrderProperties properties, {
     String pubKey = '',
   }) {
-    final stage =
-        properties.stage ??
+    final stage = properties.stage ??
         (properties.proof == null
             ? MarketplaceOrderStage.negotiate
             : MarketplaceOrderStage.commit);
@@ -101,6 +107,7 @@ class MarketplaceOrderUsecase {
 
     NdkBroadcastResponse? orderBroadcast;
     if (shouldBroadcastOrder) {
+      signed.ensureCanBroadcast();
       orderBroadcast = _broadcast.broadcast(
         nostrEvent: signed,
         specificRelays: specificRelays,
@@ -149,5 +156,87 @@ class MarketplaceOrderUsecase {
       giftWraps: wraps,
       giftWrapBroadcasts: wrapBroadcasts,
     );
+  }
+
+  MarketplaceResponse<MarketplaceOrder> queryByTradeId(
+    String tradeId, {
+    Duration? timeout,
+    Iterable<String>? explicitRelays,
+    bool cacheRead = true,
+    bool cacheWrite = true,
+    int? limit,
+  }) {
+    final response = _requests.query(
+      name: 'marketplace-orders-by-trade',
+      filter: Filter(
+        kinds: const [MarketplaceKinds.order],
+        dTags: [tradeId],
+        limit: limit,
+      ),
+      timeout: timeout,
+      explicitRelays: explicitRelays,
+      cacheRead: cacheRead,
+      cacheWrite: cacheWrite,
+    );
+    return MarketplaceResponse(
+      response.requestId,
+      response.stream.map(MarketplaceOrder.fromEvent),
+    );
+  }
+
+  MarketplaceResponse<MarketplaceOrder> queryByListing({
+    required String listingAnchor,
+    Duration? timeout,
+    Iterable<String>? explicitRelays,
+    bool cacheRead = true,
+    bool cacheWrite = true,
+    int? limit,
+  }) {
+    final response = _requests.query(
+      name: 'marketplace-orders-by-listing',
+      filter: Filter(
+        kinds: const [MarketplaceKinds.order],
+        aTags: [listingAnchor],
+        limit: limit,
+      ),
+      timeout: timeout,
+      explicitRelays: explicitRelays,
+      cacheRead: cacheRead,
+      cacheWrite: cacheWrite,
+    );
+    return MarketplaceResponse(
+      response.requestId,
+      response.stream.map(MarketplaceOrder.fromEvent),
+    );
+  }
+
+  MarketplaceResponse<MarketplaceOrder> subscribeByListing({
+    required String listingAnchor,
+    Iterable<String>? explicitRelays,
+    bool cacheRead = false,
+    bool cacheWrite = false,
+    int? limit,
+  }) {
+    final response = _requests.subscription(
+      name: 'marketplace-orders-by-listing',
+      filter: Filter(
+        kinds: const [MarketplaceKinds.order],
+        aTags: [listingAnchor],
+        limit: limit,
+      ),
+      explicitRelays: explicitRelays,
+      cacheRead: cacheRead,
+      cacheWrite: cacheWrite,
+    );
+    return MarketplaceResponse(
+      response.requestId,
+      response.stream.map(MarketplaceOrder.fromEvent),
+    );
+  }
+
+  Map<String, MarketplaceOrderGroup> group(
+    Iterable<MarketplaceOrder> orders,
+  ) {
+    return groupMarketplaceOrders(orders: orders);
   }
 }

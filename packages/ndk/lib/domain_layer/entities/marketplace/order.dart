@@ -22,18 +22,27 @@ class MarketplaceParticipantTag {
   });
 
   const MarketplaceParticipantTag.seller(this.pubkey, {this.relayHint = ''})
-    : role = 'seller';
+      : role = 'seller';
 
   const MarketplaceParticipantTag.buyer(this.pubkey, {this.relayHint = ''})
-    : role = 'buyer';
+      : role = 'buyer';
 
   const MarketplaceParticipantTag.escrow(this.pubkey, {this.relayHint = ''})
-    : role = 'escrow';
+      : role = 'escrow';
 
   List<String> toTag() {
     return role == null
         ? ['p', pubkey, relayHint]
         : ['p', pubkey, relayHint, role!];
+  }
+
+  static MarketplaceParticipantTag? tryFromTag(List<String> tag) {
+    if (tag.length < 2 || tag.first != 'p') return null;
+    return MarketplaceParticipantTag(
+      tag[1],
+      relayHint: tag.length >= 3 ? tag[2] : '',
+      role: tag.length >= 4 ? tag[3] : null,
+    );
   }
 }
 
@@ -65,12 +74,12 @@ class OrderShippingOptionSelection {
   }
 
   Map<String, dynamic> toJson() => {
-    'optionAnchor': optionAnchor,
-    'country': country,
-    if (region != null) 'region': region,
-    if (service != null) 'service': service,
-    'amount': amount.toJson(),
-  };
+        'optionAnchor': optionAnchor,
+        'country': country,
+        if (region != null) 'region': region,
+        if (service != null) 'service': service,
+        'amount': amount.toJson(),
+      };
 }
 
 class OrderProperties {
@@ -167,22 +176,24 @@ class MarketplaceOrderContent {
   }
 
   Map<String, dynamic> toJson() => {
-    if (start != null) 'start': start!.toUtc().toIso8601String(),
-    if (end != null) 'end': end!.toUtc().toIso8601String(),
-    'stage': stage.name,
-    'quantity': quantity,
-    if (amount != null) 'amount': amount!.toJson(),
-    if (recipient != null) 'recipient': recipient,
-    if (proof != null) 'proof': proof,
-    if (commitAuthorization != null) 'commitAuthorization': commitAuthorization,
-    if (shippingOptions.isNotEmpty)
-      'shippingOptions': [
-        for (final shippingOption in shippingOptions) shippingOption.toJson(),
-      ],
-    if (charges.isNotEmpty)
-      'charges': [for (final charge in charges) charge.toJson()],
-    if (extraContent.isNotEmpty) 'extraContent': extraContent,
-  };
+        if (start != null) 'start': start!.toUtc().toIso8601String(),
+        if (end != null) 'end': end!.toUtc().toIso8601String(),
+        'stage': stage.name,
+        'quantity': quantity,
+        if (amount != null) 'amount': amount!.toJson(),
+        if (recipient != null) 'recipient': recipient,
+        if (proof != null) 'proof': proof,
+        if (commitAuthorization != null)
+          'commitAuthorization': commitAuthorization,
+        if (shippingOptions.isNotEmpty)
+          'shippingOptions': [
+            for (final shippingOption in shippingOptions)
+              shippingOption.toJson(),
+          ],
+        if (charges.isNotEmpty)
+          'charges': [for (final charge in charges) charge.toJson()],
+        if (extraContent.isNotEmpty) 'extraContent': extraContent,
+      };
 
   Map<String, dynamic> committedJson() {
     final json = toJson();
@@ -216,10 +227,10 @@ class MarketplaceOrder extends Nip01Event {
     super.sources,
     int? createdAt,
   }) : super(
-         kind: MarketplaceKinds.order,
-         content: jsonEncode(orderContent.toJson()),
-         createdAt: createdAt ?? Nip01Event.secondsSinceEpoch(),
-       );
+          kind: MarketplaceKinds.order,
+          content: jsonEncode(orderContent.toJson()),
+          createdAt: createdAt ?? Nip01Event.secondsSinceEpoch(),
+        );
 
   MarketplaceOrder._raw({
     required super.pubKey,
@@ -229,17 +240,17 @@ class MarketplaceOrder extends Nip01Event {
   }) : super(kind: MarketplaceKinds.order);
 
   MarketplaceOrder.fromEvent(Nip01Event event)
-    : super(
-        id: event.id,
-        pubKey: event.pubKey,
-        kind: event.kind,
-        tags: event.tags,
-        content: event.content,
-        sig: event.sig,
-        validSig: event.validSig,
-        sources: event.sources,
-        createdAt: event.createdAt,
-      ) {
+      : super(
+          id: event.id,
+          pubKey: event.pubKey,
+          kind: event.kind,
+          tags: event.tags,
+          content: event.content,
+          sig: event.sig,
+          validSig: event.validSig,
+          sources: event.sources,
+          createdAt: event.createdAt,
+        ) {
     if (event.kind != MarketplaceKinds.order) {
       throw ArgumentError(
         'Event kind ${event.kind} is not a marketplace order',
@@ -281,6 +292,30 @@ class MarketplaceOrder extends Nip01Event {
   String? get listingAnchor => getFirstTag(MarketplaceTags.listingRef);
   MarketplaceOrderStage get stage => parsedContent.stage;
   MarketplaceAmount? get amount => parsedContent.amount;
+  bool get isNegotiation => stage == MarketplaceOrderStage.negotiate;
+  bool get isCommit => stage == MarketplaceOrderStage.commit;
+  bool get isCancel => stage == MarketplaceOrderStage.cancel;
+
+  List<MarketplaceParticipantTag> get participants => tags
+      .map(MarketplaceParticipantTag.tryFromTag)
+      .whereType<MarketplaceParticipantTag>()
+      .toList(growable: false);
+
+  String? participantPubkeyForRole(String role) {
+    for (final participant in participants) {
+      if (participant.role == role) return participant.pubkey;
+    }
+    return null;
+  }
+
+  void ensureCanBroadcast() {
+    if (isNegotiation) {
+      throw StateError(
+        'Negotiate-stage marketplace orders must be gift-wrapped, not '
+        'broadcast publicly.',
+      );
+    }
+  }
 
   String commitHash() => parsedContent.commitHash();
 
