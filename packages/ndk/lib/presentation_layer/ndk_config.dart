@@ -5,10 +5,12 @@ import '../config/logger_defaults.dart';
 import '../config/request_defaults.dart';
 import '../domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 import '../domain_layer/entities/event_filter.dart';
+import '../domain_layer/entities/inbox/inbox_message.dart';
 import '../domain_layer/entities/nip_85.dart';
 import '../domain_layer/repositories/cache_manager.dart';
 import '../domain_layer/repositories/event_verifier.dart';
 import '../domain_layer/repositories/wallets_repo.dart';
+import '../domain_layer/usecases/marketplace/hd_usecase.dart';
 import '../shared/logger/log_level.dart';
 
 /// Configuration class for the Nostr Development Kit (NDK)
@@ -84,6 +86,13 @@ class NdkConfig {
   /// Default trusted providers for NIP-85 trusted assertions.
   List<Nip85TrustedProvider> defaultTrustedProviders;
 
+  /// Optional parser used by ndk.inbox for embedded structured events.
+  InboxParser? inboxParser;
+
+  /// Optional store used by ndk.marketplace.hd to persist allocated account
+  /// indices. If omitted, the marketplace HD usecase uses an in-memory store.
+  MarketplaceAccountIndexStore? marketplaceAccountIndexStore;
+
   /// Creates a new instance of [NdkConfig].
   ///
   /// [eventVerifier] The verifier used to validate Nostr events. \
@@ -115,6 +124,8 @@ class NdkConfig {
     this.eagerAuth = false,
     this.authCallbackTimeout = RequestDefaults.DEFAULT_AUTH_CALLBACK_TIMEOUT,
     this.defaultTrustedProviders = DEFAULT_NIP85_PROVIDERS,
+    this.inboxParser,
+    this.marketplaceAccountIndexStore,
   });
 }
 

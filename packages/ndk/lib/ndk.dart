@@ -29,6 +29,14 @@ export 'domain_layer/entities/relay.dart';
 export 'domain_layer/entities/relay_set.dart';
 export 'domain_layer/entities/metadata.dart';
 export 'domain_layer/entities/event_filter.dart';
+export 'domain_layer/entities/inbox/inbox_message.dart';
+export 'domain_layer/entities/inbox/inbox_thread.dart';
+export 'domain_layer/entities/marketplace/accommodation_listing.dart';
+export 'domain_layer/entities/marketplace/escrow.dart';
+export 'domain_layer/entities/marketplace/listing.dart';
+export 'domain_layer/entities/marketplace/marketplace_amount.dart';
+export 'domain_layer/entities/marketplace/marketplace_constants.dart';
+export 'domain_layer/entities/marketplace/order.dart';
 
 export 'domain_layer/usecases/nwc/responses/get_balance_response.dart';
 export 'domain_layer/usecases/nwc/responses/get_budget_response.dart';
@@ -94,6 +102,7 @@ export 'domain_layer/usecases/accounts/accounts.dart';
 export 'domain_layer/usecases/files/blossom_user_server_list.dart';
 export 'domain_layer/usecases/search/search.dart';
 export 'domain_layer/usecases/gift_wrap/gift_wrap.dart';
+export 'domain_layer/usecases/inbox/inbox.dart';
 export 'domain_layer/usecases/cashu/cashu.dart';
 export 'domain_layer/usecases/cashu/cashu_seed.dart';
 export 'domain_layer/entities/cashu/cashu_blinded_message.dart';
@@ -110,6 +119,13 @@ export 'domain_layer/entities/nip_01_utils.dart';
 export 'domain_layer/usecases/ta/trusted_assertions.dart';
 export 'domain_layer/entities/nip_85.dart';
 export 'config/nip85_defaults.dart';
+export 'domain_layer/usecases/marketplace/escrow_usecase.dart';
+export 'domain_layer/usecases/marketplace/hd_usecase.dart';
+export 'domain_layer/usecases/marketplace/listing_usecase.dart';
+export 'domain_layer/usecases/marketplace/marketplace.dart';
+export 'domain_layer/usecases/marketplace/marketplace_response.dart';
+export 'domain_layer/usecases/marketplace/offers_usecase.dart';
+export 'domain_layer/usecases/marketplace/order_usecase.dart';
 
 /**
  * other stuff

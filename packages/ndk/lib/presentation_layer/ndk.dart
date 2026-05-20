@@ -14,7 +14,9 @@ import '../domain_layer/usecases/files/blossom_user_server_list.dart';
 import '../domain_layer/usecases/files/files.dart';
 import '../domain_layer/usecases/follows/follows.dart';
 import '../domain_layer/usecases/gift_wrap/gift_wrap.dart';
+import '../domain_layer/usecases/inbox/inbox.dart';
 import '../domain_layer/usecases/lists/lists.dart';
+import '../domain_layer/usecases/marketplace/marketplace.dart';
 import '../domain_layer/usecases/metadatas/metadatas.dart';
 import '../domain_layer/usecases/nip05/nip_05.dart';
 import '../domain_layer/usecases/nwc/nwc.dart';
@@ -180,6 +182,14 @@ class Ndk {
   @experimental // api might change
   TrustedAssertions get trustedAssertions => ta;
 
+  /// Marketplace listing, order, escrow, and offer operations.
+  @experimental
+  Marketplace get marketplace => _initialization.marketplace;
+
+  /// Giftwrap-backed private inbox and conversation threading.
+  @experimental
+  Inbox get inbox => _initialization.inbox;
+
   /// Close all transports on relay manager
   Future<void> destroy() async {
     final allFutures = [
@@ -189,6 +199,7 @@ class Ndk {
       _initialization.requests.closeAllSubscription(),
       wallets.dispose(),
       accounts.dispose(),
+      inbox.close(),
     ];
 
     await Future.wait(allFutures);

@@ -34,6 +34,14 @@ export 'domain_layer/entities/blob_upload_progress.dart';
 export 'domain_layer/entities/file_hash_progress.dart';
 export 'domain_layer/entities/account.dart';
 export 'domain_layer/entities/nip_85.dart';
+export 'domain_layer/entities/inbox/inbox_message.dart';
+export 'domain_layer/entities/inbox/inbox_thread.dart';
+export 'domain_layer/entities/marketplace/accommodation_listing.dart';
+export 'domain_layer/entities/marketplace/escrow.dart';
+export 'domain_layer/entities/marketplace/listing.dart';
+export 'domain_layer/entities/marketplace/marketplace_amount.dart';
+export 'domain_layer/entities/marketplace/marketplace_constants.dart';
+export 'domain_layer/entities/marketplace/order.dart';
 
 /// Cashu entities
 export 'domain_layer/entities/cashu/cashu_keyset.dart';

@@ -35,9 +35,11 @@ import '../domain_layer/usecases/files/blossom_user_server_list.dart';
 import '../domain_layer/usecases/files/files.dart';
 import '../domain_layer/usecases/follows/follows.dart';
 import '../domain_layer/usecases/gift_wrap/gift_wrap.dart';
+import '../domain_layer/usecases/inbox/inbox.dart';
 import '../domain_layer/usecases/jit_engine/jit_engine.dart';
 import '../domain_layer/usecases/lists/lists.dart';
 import '../domain_layer/usecases/lnurl/lnurl.dart';
+import '../domain_layer/usecases/marketplace/marketplace.dart';
 import '../domain_layer/usecases/metadatas/metadatas.dart';
 import '../domain_layer/usecases/nip05/nip_05.dart';
 import '../domain_layer/usecases/nwc/nwc.dart';
@@ -92,12 +94,14 @@ class Initialization {
   late BlossomUserServerList blossomUserServerList;
   late Search search;
   late GiftWrap giftWrap;
+  late Inbox inbox;
   late Connectivy connectivity;
   late Cashu cashu;
   late Wallets wallets;
   late FetchedRanges fetchedRanges;
   late ProofOfWork proofOfWork;
   late TrustedAssertions trustedAssertions;
+  late Marketplace marketplace;
 
   late Nip05Usecase nip05;
 
@@ -304,6 +308,21 @@ class Initialization {
     }
 
     giftWrap = GiftWrap(accounts: accounts);
+
+    marketplace = Marketplace(
+      requests: requests,
+      broadcast: broadcast,
+      accounts: accounts,
+      giftWrap: giftWrap,
+      accountIndexStore: _ndkConfig.marketplaceAccountIndexStore,
+    );
+
+    inbox = Inbox(
+      requests: requests,
+      giftWrap: giftWrap,
+      accounts: accounts,
+      parser: _ndkConfig.inboxParser,
+    );
 
     connectivity = Connectivy(relayManager);
 
