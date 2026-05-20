@@ -3,6 +3,39 @@ import 'package:ndk/shared/nips/nip01/bip340.dart';
 import 'package:ndk/shared/nips/nip01/key_pair.dart';
 import 'package:test/test.dart';
 
+class _RecordingNip44Cryptography implements Nip44Cryptography {
+  String? lastEncryptPlaintext;
+  String? lastEncryptPrivateKey;
+  String? lastEncryptPublicKey;
+  String? lastDecryptCiphertext;
+  String? lastDecryptPrivateKey;
+  String? lastDecryptPublicKey;
+
+  @override
+  Future<String> encrypt({
+    required String plaintext,
+    required String privateKey,
+    required String publicKey,
+  }) async {
+    lastEncryptPlaintext = plaintext;
+    lastEncryptPrivateKey = privateKey;
+    lastEncryptPublicKey = publicKey;
+    return 'enc:$plaintext:$publicKey';
+  }
+
+  @override
+  Future<String> decrypt({
+    required String ciphertext,
+    required String privateKey,
+    required String publicKey,
+  }) async {
+    lastDecryptCiphertext = ciphertext;
+    lastDecryptPrivateKey = privateKey;
+    lastDecryptPublicKey = publicKey;
+    return 'dec:$ciphertext:$publicKey';
+  }
+}
+
 void main() {
   group('Bip340EventSigner', () {
     late Bip340EventSigner signer;
@@ -115,8 +148,10 @@ void main() {
         expect(encrypted, isNotNull);
         expect(encrypted, isNot(equals(message)));
 
-        final decrypted =
-            await otherSigner.decrypt(encrypted!, keyPair.publicKey);
+        final decrypted = await otherSigner.decrypt(
+          encrypted!,
+          keyPair.publicKey,
+        );
         expect(decrypted, equals(message));
 
         await otherSigner.dispose();
@@ -145,6 +180,35 @@ void main() {
         expect(decrypted, equals(message));
 
         await otherSigner.dispose();
+      });
+
+      test('delegates NIP-44 operations to configured cryptography', () async {
+        final crypto = _RecordingNip44Cryptography();
+        final customSigner = Bip340EventSigner(
+          privateKey: keyPair.privateKey,
+          publicKey: keyPair.publicKey,
+          nip44Cryptography: crypto,
+        );
+
+        final encrypted = await customSigner.encryptNip44(
+          plaintext: 'hello',
+          recipientPubKey: 'recipient-pubkey',
+        );
+        final decrypted = await customSigner.decryptNip44(
+          ciphertext: 'ciphertext',
+          senderPubKey: 'sender-pubkey',
+        );
+
+        expect(encrypted, 'enc:hello:recipient-pubkey');
+        expect(decrypted, 'dec:ciphertext:sender-pubkey');
+        expect(crypto.lastEncryptPlaintext, 'hello');
+        expect(crypto.lastEncryptPrivateKey, keyPair.privateKey);
+        expect(crypto.lastEncryptPublicKey, 'recipient-pubkey');
+        expect(crypto.lastDecryptCiphertext, 'ciphertext');
+        expect(crypto.lastDecryptPrivateKey, keyPair.privateKey);
+        expect(crypto.lastDecryptPublicKey, 'sender-pubkey');
+
+        await customSigner.dispose();
       });
     });
   });
@@ -211,24 +275,22 @@ void main() {
         await signer.dispose();
       });
 
-      test('creates signer with only private key (derives public key)',
-          () async {
-        final keyPair = Bip340.generatePrivateKey();
-        final signer = factory.create(
-          privateKey: keyPair.privateKey,
-        );
+      test(
+        'creates signer with only private key (derives public key)',
+        () async {
+          final keyPair = Bip340.generatePrivateKey();
+          final signer = factory.create(privateKey: keyPair.privateKey);
 
-        expect(signer.getPublicKey(), equals(keyPair.publicKey));
-        expect(signer.canSign(), isTrue);
+          expect(signer.getPublicKey(), equals(keyPair.publicKey));
+          expect(signer.canSign(), isTrue);
 
-        await signer.dispose();
-      });
+          await signer.dispose();
+        },
+      );
 
       test('creates read-only signer with only public key', () async {
         final keyPair = Bip340.generatePrivateKey();
-        final signer = factory.create(
-          publicKey: keyPair.publicKey,
-        );
+        final signer = factory.create(publicKey: keyPair.publicKey);
 
         expect(signer.getPublicKey(), equals(keyPair.publicKey));
         expect(signer.canSign(), isFalse);
@@ -237,10 +299,7 @@ void main() {
       });
 
       test('throws ArgumentError when neither key is provided', () {
-        expect(
-          () => factory.create(),
-          throwsArgumentError,
-        );
+        expect(() => factory.create(), throwsArgumentError);
       });
 
       test('derived public key can sign valid events', () async {
@@ -266,23 +325,25 @@ void main() {
         await signer.dispose();
       });
 
-      test('uses provided public key even if derivation would differ',
-          () async {
-        final keyPair1 = Bip340.generatePrivateKey();
-        final keyPair2 = Bip340.generatePrivateKey();
+      test(
+        'uses provided public key even if derivation would differ',
+        () async {
+          final keyPair1 = Bip340.generatePrivateKey();
+          final keyPair2 = Bip340.generatePrivateKey();
 
-        // Intentionally mismatched keys
-        final signer = factory.create(
-          privateKey: keyPair1.privateKey,
-          publicKey: keyPair2.publicKey, // Different public key
-        );
+          // Intentionally mismatched keys
+          final signer = factory.create(
+            privateKey: keyPair1.privateKey,
+            publicKey: keyPair2.publicKey, // Different public key
+          );
 
-        // Should use the provided public key, not derived
-        expect(signer.getPublicKey(), equals(keyPair2.publicKey));
-        expect(signer.getPublicKey(), isNot(equals(keyPair1.publicKey)));
+          // Should use the provided public key, not derived
+          expect(signer.getPublicKey(), equals(keyPair2.publicKey));
+          expect(signer.getPublicKey(), isNot(equals(keyPair1.publicKey)));
 
-        await signer.dispose();
-      });
+          await signer.dispose();
+        },
+      );
     });
 
     group('createWithNewKeyPair', () {
