@@ -9,8 +9,10 @@ import '../domain_layer/entities/event_filter.dart';
 import '../domain_layer/entities/nip_85.dart';
 import '../domain_layer/repositories/cache_manager.dart';
 import '../domain_layer/repositories/event_signer.dart';
+import '../domain_layer/repositories/nip44_cryptography.dart';
 import '../domain_layer/repositories/event_verifier.dart';
 import '../domain_layer/repositories/wallets_repo.dart';
+import '../data_layer/repositories/cryptography/default_nip44_cryptography.dart';
 import '../shared/logger/log_level.dart';
 
 /// Configuration class for the Nostr Development Kit (NDK)
@@ -20,6 +22,9 @@ import '../shared/logger/log_level.dart';
 class NdkConfig {
   /// The verifier used to validate Nostr events. E.g. RustEventVerifier(), Bip340EventVerifier
   EventVerifier eventVerifier;
+
+  /// Cryptography used for local NIP-44 encryption/decryption.
+  Nip44Cryptography nip44Cryptography;
 
   /// The cache manager (DB) used to store and retrieve Nostr data. E.g MemCacheManager()
   CacheManager cache;
@@ -104,7 +109,8 @@ class NdkConfig {
   NdkConfig({
     required this.eventVerifier,
     required this.cache,
-    this.eventSignerFactory = const Bip340EventSignerFactory(),
+    LocalEventSignerFactory? eventSignerFactory,
+    Nip44Cryptography? nip44Cryptography,
     this.walletsRepo,
     this.engine = NdkEngine.RELAY_SETS,
     this.ignoreRelays = const [],
@@ -122,7 +128,13 @@ class NdkConfig {
     this.eagerAuth = false,
     this.authCallbackTimeout = RequestDefaults.DEFAULT_AUTH_CALLBACK_TIMEOUT,
     this.defaultTrustedProviders = DEFAULT_NIP85_PROVIDERS,
-  });
+  })  : nip44Cryptography =
+            nip44Cryptography ?? const DefaultNip44Cryptography(),
+        eventSignerFactory = eventSignerFactory ??
+            Bip340EventSignerFactory(
+              nip44Cryptography:
+                  nip44Cryptography ?? const DefaultNip44Cryptography(),
+            );
 }
 
 /// Enum representing different engine modes for Nostr network operations.
@@ -133,5 +145,5 @@ enum NdkEngine {
 
   /// Uses Just-In-Time (JIT) mode for network operations.
   // ignore: constant_identifier_names
-  JIT
+  JIT,
 }
